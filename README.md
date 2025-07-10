@@ -29,4 +29,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 For questions or contributions, please contact:
 •	Dr. Shayan Mostafaei (shayan.mostafaei@ki.se) 
 •	Dr. Sara Hägg (sara.hagg@ki.se)
+•	Jakob Lindh (jakob.lindh@ki.se)
 
