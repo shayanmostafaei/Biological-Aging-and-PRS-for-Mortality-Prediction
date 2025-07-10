@@ -12,7 +12,7 @@ This project evaluates the predictive performance of biological aging (BA) measu
 
 ## Directory Structure
 
-- `TwinGene/scripts/` - R scripts for data analysis and modeling
+- `TwinGene/scripts/` - R script for data analysis and modeling
 - `TwinGene/data/` - Input data files (not included in the repository)
 - `TwinGene/results/` - Output results such as tables and model outputs
 - `TwinGene/figures/` - Generated plots and visualizations
