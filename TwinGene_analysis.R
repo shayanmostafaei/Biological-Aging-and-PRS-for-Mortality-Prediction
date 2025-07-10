@@ -1,8 +1,6 @@
 ## To create a correlation plot for the variables in TwinGene
 library(BioAge)
-# Define age variables
 agevar <- c("PRS_Z", "age", "phenoage_res", "kdm_res", "hd_res", "Frailty_Index_0.10_log", "Telomere")
-# Define axis types
 axis_type <- c(
 "PRS_Z" = "float",
 "age" = "float",
@@ -12,7 +10,6 @@ axis_type <- c(
 "Frailty_Index_0.10_log" = "float",
 "Telomere" = "float"
 )
-# Define labels with the specified renaming and order
 label <- c(
 "PRS_Z" = "Polygenic Risk Scores",
 "age" = "Choronological age",
@@ -25,10 +22,8 @@ label <- c(
 plot_baa(data_twingene, agevar, label, axis_type)
 #---------------------------------------------------------------------------
 ## To calculate the univariate AUC (95% CI) for each predictor in the TwinGene
-# Load necessary libraries
 library(pROC)
 library(dplyr)
-# Ensure 'status' is a binary factor (0 = no event, 1 = event)
 data_twingene$status <- as.factor(data_twingene$status)
 # Define predictors
 predictors <- c("age", "PRS_Z", "phenoage_res", "kdm_res", "hd_res",
@@ -54,22 +49,16 @@ roc_var <- roc(data_twingene$status, data_twingene[[var]])
 p_value <- roc.test(roc_ca, roc_var, method = "delong")$p.value
 return(p_value)
 })
-# Format P-values and combine results
 auc_results$p_value <- c("-", round(p_values, 10))  # Add p-values
-# Print the final results table
 print(auc_results)
 #----------------------------------------------------------------------------------------------
 ## To compare AUCs of BA measures with CA
 library(pROC)
 library(dplyr)
-# Ensure 'death_status' is a binary factor (0 = no event, 1 = event)
 data_twingene$status <- as.factor(data_twingene$status)  # TwinGene dataset
-# Define predictors
 predictors <- c("PRS_Z", "phenoage_res", "kdm_res", "hd_res",
 "Frailty_Index_0.10_log", "Telomere")
-# Function to compute AUC & 95% CI
 calculate_auc <- function(var, data, status_col) {
-# Ensure there are no missing values for the predictor and the outcome
 valid_data <- data %>%
 filter(!is.na(.data[[var]]) & !is.na(.data[[status_col]]))
 if (nrow(valid_data) == 0) {
@@ -85,7 +74,6 @@ CI_Lower = round(ci_values[1], 3),
 CI_Upper = round(ci_values[3], 3)
 ))
 }
-# Compute AUC for all predictors in data_twingene
 auc_results_twingene <- do.call(rbind, lapply(c("age", predictors), calculate_auc, data = data_twingene, status_col = "status"))
 # Function to perform DeLong's test against CA
 calculate_p_value <- function(var, data, status_col) {
@@ -97,18 +85,16 @@ return(p_value)
 # Calculate p-values for each predictor compared to CA in data_twingene
 p_values_twingene <- sapply(predictors, calculate_p_value, data = data_twingene, status_col = "status")
 # Combine AUC results and p-values for data_twingene
-auc_results_twingene$p_value <- c("-", round(p_values_twingene, 10))  # Add p-values
+auc_results_twingene$p_value <- c("-", round(p_values_twingene, 10))  
 # Print the final results table for Overall_data
 print("Overall_data AUC Results:")
 print(auc_results_overall)
-# Print the final results table for TwinGene
 print(auc_results_twingene)
 #-------------------------------------------------------------------------------------------
 ## To create a forest plot of Univariate AUC for both cohorts 
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-# Create the data frame with updated AUC values
 data <- data.frame(
 Predictor = c("CA", "PhenoAge", "KDM", "HD", "FI", "Telomere length", "PRS"),
 AUC_TwinGene = c(0.835, 0.874, 0.747, 0.592, 0.574, 0.581, 0.510),
@@ -118,7 +104,6 @@ AUC_UKB = c(0.708, 0.624, 0.600, 0.565, 0.587, 0.521, 0.502),
 CI_Lower_UKB = c(0.703, 0.619, 0.595, 0.560, 0.582, 0.516, 0.498),
 CI_Upper_UKB = c(0.712, 0.629, 0.605, 0.570, 0.592, 0.526, 0.505)
 )
-# Order the data by AUC_TwinGene from highest to lowest
 data <- data %>%
 arrange(desc(AUC_TwinGene)) %>%
 mutate(Predictor = factor(Predictor, levels = Predictor))
@@ -134,7 +119,6 @@ left_join(data %>%
 pivot_longer(cols = starts_with("CI_Upper"), names_to = "Cohort", values_to = "CI_Upper") %>%
 mutate(Cohort = ifelse(grepl("TwinGene", Cohort), "TwinGene", "UK Biobank")),
 by = c("Predictor", "Cohort"))
-# Plot using ggplot2 with enhanced font sizes and better colors
 ggplot(data_long, aes(x = AUC, y = Predictor, color = Cohort)) +
 geom_point(position = position_dodge(width = 0.5), size = 5) +  # Increase point size
 geom_errorbarh(aes(xmin = CI_Lower, xmax = CI_Upper),
@@ -160,15 +144,13 @@ library(pROC)
 library(caret)
 library(randomForest)
 library(xgboost)
-# Define predictors excluding KDM and HD from the full model
 predictors_age <- data_twingene[, "age", drop = FALSE]
 predictors_reduced <- data_twingene[, c("age", "PRS_Z")]
 predictors_full <- data_twingene[, c("age", "PRS_Z", "phenoage_res", "Telomere", "Frailty_Index_0.10_log", "gender", "bmi", "smoker", "education_years")]
 outcome <- data_twingene$status
-# Convert outcome to a numeric vector for classification
 outcome <- as.numeric(as.character(outcome))
 # Split data into training (70%) and testing (30%) sets
-set.seed(123) # For reproducibility
+set.seed(123) 
 train_index <- createDataPartition(outcome, p = 0.7, list = FALSE)
 train_predictors_age <- predictors_age[train_index, ]
 train_predictors_reduced <- predictors_reduced[train_index, ]
@@ -206,17 +188,14 @@ library(survival)
 library(survminer)
 library(rms)
 variables <- c("age", "PRS_Z", "kdm_res", "phenoage_res", "hd_res", "Telomere", "Frailty_Index_0.10_log")
-# Create an empty list to store results
 univariate_results <- list()
 for (var in variables) {
 model <- coxph(Surv(time_to_event, status) ~ get(var), data = data_twingene)
 summary_model <- summary(model)
-# Extract HR and 95% CI
 HR <- summary_model$coefficients[,"exp(coef)"]
 lower_CI <- summary_model$conf.int[,"lower .95"]
 upper_CI <- summary_model$conf.int[,"upper .95"]
 p_value <- summary_model$coefficients[,"Pr(>|z|)"]
-# Store results
 univariate_results[[var]] <- data.frame(
 Variable = var,
 HR = HR,
@@ -225,51 +204,12 @@ Upper_95_CI = upper_CI,
 P_value = p_value
 )
 }
-# Combine all results into a dataframe
 univariate_results_df <- do.call(rbind, univariate_results)
-# Print results
 print(univariate_results_df)
 multivariable_model <- coxph(Surv(time_to_event, status) ~
 age + PRS_Z + kdm_res + phenoage_res +
 hd_res + Telomere + Frailty_Index_0.10_log+ gender + bmi +
 smoker + education_years, data = data_twingene)
-# Print the summary of the model
-summary(multivariable_model)
-c_index <- summary(multivariable_model)$concordance[1]
-print(paste("C-index:", c_index))
-###
-library(survival)
-library(survminer)
-library(rms)
-variables <- c("age", "PRS_Z", "kdm_res", "phenoage_res", "hd_res", "Telomere", "Frailty_Index_0.10_log")
-# Create an empty list to store results
-univariate_results <- list()
-for (var in variables) {
-model <- coxph(Surv(time_to_event, status) ~ get(var), data = data_twingene)
-summary_model <- summary(model)
-# Extract HR and 95% CI
-HR <- summary_model$coefficients[,"exp(coef)"]
-lower_CI <- summary_model$conf.int[,"lower .95"]
-upper_CI <- summary_model$conf.int[,"upper .95"]
-p_value <- summary_model$coefficients[,"Pr(>|z|)"]
-# Store results
-univariate_results[[var]] <- data.frame(
-Variable = var,
-HR = HR,
-Lower_95_CI = lower_CI,
-Upper_95_CI = upper_CI,
-P_value = p_value
-)
-}
-# Combine all results into a dataframe
-univariate_results_df <- do.call(rbind, univariate_results)
-# Print results
-print(univariate_results_df)
-multivariable_model <- coxph(Surv(time_to_event, status) ~
-age + PRS_Z + phenoage_res +
-Telomere + Frailty_Index_0.10_log+ gender + bmi +
-smoker + education_years, data = data_twingene)
-# Print the summary of the model
 summary(multivariable_model)
 c_index <- summary(multivariable_model)$concordance[1]
 print(paste("C-index:", c_index))
@@ -279,23 +219,17 @@ library(pROC)
 library(ggplot2)
 library(dplyr)
 library(cowplot)
-# Load your dataset (replace with actual file path or use readr::read_csv if needed)
-# Ensure binary outcome is numeric (0 = alive, 1 = dead)
 data_twingene$status <- as.numeric(data_twingene$status)
-# Build logistic regression models
 model_ca <- glm(status ~ age, data = data_twingene, family = binomial)
 model_ca_prs <- glm(status ~ age + PRS, data = data_twingene, family = binomial)
 model_full <- glm(status ~ age + PRS + phenoage_res + Frailty_Index_0.10_log + Telomere +
 gender + bmi + smoker + education_years, data = data_twingene, family = binomial)
-# Get predicted probabilities
 data_twingene$pred_ca <- predict(model_ca, type = "response")
 data_twingene$pred_ca_prs <- predict(model_ca_prs, type = "response")
 data_twingene$pred_full <- predict(model_full, type = "response")
-# Compute ROC curves
 roc_ca <- roc(data_twingene$status, data_twingene$pred_ca)
 roc_ca_prs <- roc(data_twingene$status, data_twingene$pred_ca_prs)
 roc_full <- roc(data_twingene$status, data_twingene$pred_full)
-# Plot ROC curves with light-to-dark color theme
 ggroc(list(
 `CA Model` = roc_ca,
 `CA + PRS Model` = roc_ca_prs,
@@ -320,7 +254,6 @@ plot.title = element_text(hjust = 0.5, face = "bold"))
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-# Create the data frame
 data <- data.frame(
 Predictor = c("CA", "PhenoAge", "KDM", "HD", "FI", "Telomere length", "PRS"),
 HR_TwinGene = c(1.15, 1.30, 1.16, 1.29, 1.33, 0.66, 0.99),
@@ -332,11 +265,9 @@ CI_Upper_UKB = c(1.105, 1.062, 1.071, 1.22, 1.60, 0.64, 1.010),
 C_Index_TwinGene = 0.913,
 C_Index_UKB = 0.749
 )
-# Order data
 data <- data %>%
 arrange(desc(HR_TwinGene)) %>%
 mutate(Predictor = factor(Predictor, levels = Predictor))
-# Reshape the data to long format
 data_long <- data %>%
 pivot_longer(cols = c(HR_TwinGene, HR_UKB), names_to = "Cohort", values_to = "HR") %>%
 mutate(
@@ -344,7 +275,6 @@ Cohort = ifelse(grepl("TwinGene", Cohort), "TwinGene", "UK Biobank"),
 CI_Lower = ifelse(Cohort == "TwinGene", CI_Lower_TwinGene, CI_Lower_UKB),
 CI_Upper = ifelse(Cohort == "TwinGene", CI_Upper_TwinGene, CI_Upper_UKB)
 )
-# Define C-indices as subtitle
 c_index_text <- paste0("C-index (TwinGene): ", data$C_Index_TwinGene[1],
 " | C-index (UK Biobank): ", data$C_Index_UKB[1])
 # Plot the data with increased font size
@@ -372,16 +302,13 @@ axis.text = element_text(size = 16)
 ## Univariate AUCs for each predictor in the TwinGene with subgroup analysis for age categories and follow-up time
 library(pROC)
 library(dplyr)
-# Ensure 'status' is a binary factor (0 = no event, 1 = event)
 data_twingene$status <- as.factor(data_twingene$status)
-# calculation for death_status in each follow-up period
 data_twingene <- data_twingene %>%
 mutate(
 death_status_5y  = ifelse(time_to_event < 5  & status == 1, 1, ifelse(time_to_event >= 5, 0, NA)),
 death_status_10y = ifelse(time_to_event < 10 & status == 1, 1, ifelse(time_to_event >= 10, 0, NA)),
 death_status_15y = ifelse(time_to_event < 15 & status == 1, 1, ifelse(time_to_event >= 15, 0, NA))
 )
-# Categorize age into three groups
 data_twingene <- data_twingene %>%
 mutate(
 age_group = case_when(
@@ -390,7 +317,6 @@ age >= 50 & age <= 60 ~ "50-60",
 age > 60 ~ ">60"
 )
 )
-# Define predictors
 predictors <- c("PRS_Z", "phenoage_res", "kdm_res", "hd_res",
 "Frailty_Index_0.10_log", "Telomere")
 # Function to compute AUC & 95% CI for subgroups
@@ -410,7 +336,6 @@ CI_Lower = round(ci_values[1], 3),
 CI_Upper = round(ci_values[3], 3)
 ))
 }
-# Function to compute AUCs for subgroups
 compute_auc_subgroups <- function(data, followup_col, age_group) {
 subset_data <- data %>% filter(age_group == age_group)
 auc_results <- do.call(rbind, lapply(predictors, calculate_auc, data = subset_data, status_col = followup_col))
@@ -418,7 +343,6 @@ auc_results$Age_Group <- age_group
 auc_results$Follow_Up <- followup_col
 return(auc_results)
 }
-# Perform subgroup analysis
 subgroup_results <- bind_rows(
 compute_auc_subgroups(data_twingene, "death_status_5y", "<50"),
 compute_auc_subgroups(data_twingene, "death_status_5y", "50-60"),
@@ -430,32 +354,21 @@ compute_auc_subgroups(data_twingene, "death_status_15y", "<50"),
 compute_auc_subgroups(data_twingene, "death_status_15y", "50-60"),
 compute_auc_subgroups(data_twingene, "death_status_15y", ">60")
 )
-# Print the final results table
 print(subgroup_results)
 #--------------------------------------------------------------------------------------------------------------------------
 ## To check interaction between BMI and BAs performance in TwinGene
 library(pROC)
-# Ensure 'status' is a binary factor (0 = no event, 1 = event)
 data_twingene$status <- as.factor(data_twingene$status)
-# Function to calculate AUC and p-value for interaction term between BMI and predictor
 calculate_auc_interaction_with_pvalue <- function(predictor, data, status_col) {
-# Remove rows with missing values for BMI and the predictor
 valid_data <- data[!is.na(data$bmi) & !is.na(data[[predictor]]) & !is.na(data[[status_col]]), ]
-# Create interaction term between BMI and the predictor
 valid_data$interaction_term <- valid_data$bmi * valid_data[[predictor]]
-# Fit logistic regression model with interaction term
 formula <- as.formula(paste(status_col, "~ bmi +", predictor, "+ interaction_term"))
 model <- glm(formula, data = valid_data, family = binomial)
-# Get predicted probabilities from the model
 predicted_probs <- predict(model, type = "response")
-# Compute ROC curve
 roc_obj <- roc(valid_data[[status_col]], predicted_probs, ci = TRUE)
-# Get AUC and its confidence interval
 auc_value <- auc(roc_obj)
 ci_values <- ci.auc(roc_obj)
-# Get p-value for the interaction term (bmi:predictor)
 interaction_pvalue <- summary(model)$coefficients["interaction_term", "Pr(>|z|)"]
-# Return the results with AUC, CI, and p-value for the interaction term
 return(data.frame(
 Predictor = predictor,
 AUC = round(auc_value, 3),
@@ -464,7 +377,6 @@ CI_Upper = round(ci_values[3], 3),
 Interaction_PValue = round(interaction_pvalue, 4)
 ))
 }
-# Define predictors
 predictors <- c("PRS_Z", "phenoage_res", "kdm_res", "hd_res",
 "Frailty_Index_0.10_log", "Telomere")
 # Calculate AUCs and p-values for each predictor and its interaction with BMI
@@ -475,25 +387,20 @@ print(auc_results_interaction)
 ## Sub-group analysis of predictive power of each predictor between sexes in TwinGene
 library(pROC)
 data_twingene$status <- as.factor(data_twingene$status)
-# Function to calculate AUC for a predictor, stratified by gender
 calculate_auc_by_gender <- function(predictor, data) {
 # Filter data by gender: 1 = Men, 2 = Women
 data_men <- data[data$gender == 1, ]
 data_women <- data[data$gender == 2, ]
-# Remove NA values for the predictor
 data_men <- data_men[!is.na(data_men[[predictor]]), ]
 data_women <- data_women[!is.na(data_women[[predictor]]), ]
-# Compute ROC for men and women
 roc_men <- roc(data_men$status, data_men[[predictor]], ci = TRUE)
 roc_women <- roc(data_women$status, data_women[[predictor]], ci = TRUE)
 # Compute AUC values
 auc_men <- auc(roc_men)
 auc_women <- auc(roc_women)
-# Perform DeLong's test to compare AUC between genders
 test_result <- roc.test(roc_men, roc_women, method = "delong")
 # Extract p-value from DeLong’s test
 p_value <- test_result$p.value
-# Return results as a dataframe
 return(data.frame(
 Predictor = predictor,
 AUC_Men = round(auc_men, 3),
@@ -501,74 +408,27 @@ AUC_Women = round(auc_women, 3),
 P_Value = round(p_value, 4)
 ))
 }
-# Define predictors to test
 predictors <- c("PRS_Z", "phenoage_res", "kdm_res", "hd_res",
 "Frailty_Index_0.10_log", "Telomere")
-# Compute AUCs and statistical comparisons for each predictor
 auc_gender_results <- do.call(rbind, lapply(predictors, calculate_auc_by_gender, data = data_twingene))
-# Print the results
-print(auc_gender_results)
-## in the UKB
-library(pROC)
-# Ensure 'death_status' is a binary factor (0 = no event, 1 = event)
-Overall_data$death_status <- as.factor(Overall_data$death_status)
-# Function to calculate AUC for a predictor, stratified by gender
-calculate_auc_by_gender <- function(predictor, data) {
-# Filter data by gender: 1 = Men, 0 = Women
-data_men <- data[data$sex == 1, ]   # Sex = 1 for Men
-data_women <- data[data$sex == 0, ] # Sex = 0 for Women
-# Remove NA values for the predictor
-data_men <- data_men[!is.na(data_men[[predictor]]), ]
-data_women <- data_women[!is.na(data_women[[predictor]]), ]
-# Compute ROC for men and women
-roc_men <- roc(data_men$death_status, data_men[[predictor]], ci = TRUE)
-roc_women <- roc(data_women$death_status, data_women[[predictor]], ci = TRUE)
-# Compute AUC values
-auc_men <- auc(roc_men)
-auc_women <- auc(roc_women)
-# Perform DeLong's test to compare AUC between genders
-test_result <- roc.test(roc_men, roc_women, method = "delong")
-# Extract p-value from DeLong’s test
-p_value <- test_result$p.value
-# Return results as a dataframe
-return(data.frame(
-Predictor = predictor,
-AUC_Men = round(auc_men, 3),
-AUC_Women = round(auc_women, 3),
-P_Value = round(p_value, 4)
-))
-}
-# Define predictors to test (adjust these if needed)
-predictors <- c("PRS_Z", "Phenoage.Residual", "HD.Residual", "KDM.Residual",
-"FI.Residual", "Telomere_Length.Residual")
-# Compute AUCs and statistical comparisons for each predictor
-auc_gender_results <- do.call(rbind, lapply(predictors, calculate_auc_by_gender, data = Overall_data))
-# Print the results
 print(auc_gender_results)
 #-------------------------------------------------------------------------------------------------------------------
 ## Sub-group analysis of predictive power of each predictor between smokers and non-smokers in TwinGene
 library(pROC)
-# Ensure 'status' is a binary factor (0 = no event, 1 = event)
 data_twingene$status <- as.factor(data_twingene$status)
-# Function to calculate AUC for a predictor, stratified by smoker status
 calculate_auc_by_smoker <- function(predictor, data) {
 # Filter data by smoker status: 0 = Non-Smoker, 1 = Smoker
 data_non_smoker <- data[data$smoker == 0, ]
 data_smoker <- data[data$smoker == 1, ]
-# Remove NA values for the predictor
 data_non_smoker <- data_non_smoker[!is.na(data_non_smoker[[predictor]]), ]
 data_smoker <- data_smoker[!is.na(data_smoker[[predictor]]), ]
-# Compute ROC for non-smokers and smokers
 roc_non_smoker <- roc(data_non_smoker$status, data_non_smoker[[predictor]], ci = TRUE)
 roc_smoker <- roc(data_smoker$status, data_smoker[[predictor]], ci = TRUE)
-# Compute AUC values
 auc_non_smoker <- auc(roc_non_smoker)
 auc_smoker <- auc(roc_smoker)
-# Perform DeLong's test to compare AUC between smoker and non-smoker groups
 test_result <- roc.test(roc_non_smoker, roc_smoker, method = "delong")
 # Extract p-value from DeLong’s test
 p_value <- test_result$p.value
-# Return results as a dataframe
 return(data.frame(
 Predictor = predictor,
 AUC_Non_Smoker = round(auc_non_smoker, 3),
@@ -576,60 +436,19 @@ AUC_Smoker = round(auc_smoker, 3),
 P_Value = round(p_value, 4)
 ))
 }
-# Define predictors to test
 predictors <- c("PRS_Z", "phenoage_res", "kdm_res", "hd_res",
 "Frailty_Index_0.10_log", "Telomere")
 # Compute AUCs and statistical comparisons for each predictor
 auc_smoker_results <- do.call(rbind, lapply(predictors, calculate_auc_by_smoker, data = data_twingene))
-# Print the results
-print(auc_smoker_results)
-## in the UKB
-library(pROC)
-# Ensure 'death_status' is a binary factor (0 = no event, 1 = event)
-Overall_data$death_status <- as.factor(Overall_data$death_status)
-# Function to calculate AUC for a predictor, stratified by smoker status
-calculate_auc_by_smoker <- function(predictor, data) {
-# Filter data by smoker status: 1 = Non-Smoker, 2 = Smoker
-data_non_smoker <- data[data$smoking == 1, ]  # Non-smokers
-data_smoker <- data[data$smoking == 2, ]      # Smokers
-# Remove NA values for the predictor
-data_non_smoker <- data_non_smoker[!is.na(data_non_smoker[[predictor]]), ]
-data_smoker <- data_smoker[!is.na(data_smoker[[predictor]]), ]
-# Compute ROC for non-smokers and smokers
-roc_non_smoker <- roc(data_non_smoker$death_status, data_non_smoker[[predictor]], ci = TRUE)
-roc_smoker <- roc(data_smoker$death_status, data_smoker[[predictor]], ci = TRUE)
-# Compute AUC values
-auc_non_smoker <- auc(roc_non_smoker)
-auc_smoker <- auc(roc_smoker)
-# Perform DeLong's test to compare AUC between smoker and non-smoker groups
-test_result <- roc.test(roc_non_smoker, roc_smoker, method = "delong")
-# Extract p-value from DeLong’s test
-p_value <- test_result$p.value
-# Return results as a dataframe
-return(data.frame(
-Predictor = predictor,
-AUC_Non_Smoker = round(auc_non_smoker, 3),
-AUC_Smoker = round(auc_smoker, 3),
-P_Value = round(p_value, 4)
-))
-}
-# Define predictors to test (update as needed)
-predictors <- c("PRS_Z", "Phenoage.Residual", "HD.Residual", "KDM.Residual",
-"FI.Residual", "Telomere_Length.Residual")
-# Compute AUCs and statistical comparisons for each predictor
-auc_smoker_results <- do.call(rbind, lapply(predictors, calculate_auc_by_smoker, data = Overall_data))
-# Print the results
 print(auc_smoker_results)
 #-------------------------------------------------------------------------------------------------------------------------------------
 ## Sub-group analysis of predictive power of BAs and education level in TwinGene
 # Load necessary library
 library(dplyr)
-# Create the interaction model
 model <- glm(status ~ education_years * PRS_Z + education_years * phenoage_res + education_years * hd_res + education_years * kdm_res +
 education_years * Telomere + education_years * Frailty_Index_0.10_log,
 family = binomial,
 data = data_twingene)
-# Display the summary of the model
 summary(model)
 #--------------------------------------------------------------------------------------------------------
 ## S.Figure 1
