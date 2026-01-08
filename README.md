@@ -32,10 +32,9 @@ We considered adding contemporary clinical BA comparators (e.g., **GOLD BioAge**
 ├── README.md
 ├── LICENSE
 ├── Requirements.txt
-├── TwinGene_analysis.R           # Main runner script (multicohort pipeline)
 └── scripts/
 ├── 00_setup.R                    # Package loading + shared helpers
-├── 01_prepare_inputs.R           # Input schemas + preprocessing helpers
+├── 01_BioAge.R                   # BioAge correlation matrix 
 ├── 02_models_cox_roc.R           # Univariate ROC + Cox models
 ├── 03_superlearner_cv.R          # 10-fold CV SuperLearner (+ optional repeats)
 ├── 04_subgroup_interactions.R    # Subgroup scaffolding + interaction hooks
