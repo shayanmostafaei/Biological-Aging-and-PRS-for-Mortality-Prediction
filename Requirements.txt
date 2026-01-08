@@ -1,16 +1,36 @@
-PLINK software
-R packages:
-BioAge
-pROC
+## 2) `Requirements.txt` ✅ (replace entire file)
+
+# R package dependencies (install from CRAN unless noted)
+
+data.table
 dplyr
-ggplot2
 tidyr
-caret
-randomForest
-xgboost
-SuperLearner
+readr
+stringr
+purrr
+tibble
+
+ggplot2
+ggnewscale
+scales
+patchwork
+
 survival
 survminer
 rms
-cowplot
-metafor
+timeROC
+pROC
+
+SuperLearner
+caret
+xgboost
+randomForest
+
+Matrix
+glmnet
+
+# If you compute BA measures from biomarkers:
+# Install BioAge from GitHub:
+# remotes::install_github("dayoonkwon/BioAge")
+remotes
+BioAge
