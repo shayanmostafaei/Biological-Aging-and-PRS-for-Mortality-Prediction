@@ -68,24 +68,6 @@ Scripts assume the datasets include outcome/time variables and harmonized predic
 
 ---
 
-## How to run
-
-From R:
-
-```r
-
-source("TwinGene_analysis.R")
-
-Key outputs are written to the configured output directory (default in runner), including:
-	•	Univariate ROC AUC tables
-	•	Cox model results tables
-	•	SuperLearner CV results (all seeds + summary mean±SD when repeats enabled)
-	•	Supplementary figures
-
-A sessionInfo.txt file is saved for reproducibility.
-
----
-
 ## Requirements
 
 See `Requirements.txt` for the list of R packages used in the analysis.
@@ -98,7 +80,7 @@ This project is licensed under the MIT License — see the `LICENSE` file for de
 
 ---
 
-## Contact
+## Contact 
 
 For questions or contributions, please contact:
 - Dr. Shayan Mostafaei (shayan.mostafaei@ki.se)
