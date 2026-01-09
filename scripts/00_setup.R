@@ -11,10 +11,10 @@ quiet_require <- function(pkg) {
 
 pkgs <- c(
   "data.table","dplyr","tidyr","readr","stringr","purrr","tibble",
-  "ggplot2","ggnewscale","scales","patchwork","BioAge",
+  "ggplot2","ggnewscale","scales","patchwork",
   "survival","survminer","rms","timeROC","pROC",
   "SuperLearner","caret","xgboost","randomForest",
-  "Matrix","glmnet"
+  "Matrix","glmnet","BioAge"
 )
 
 invisible(lapply(pkgs, quiet_require))
@@ -22,24 +22,23 @@ invisible(lapply(pkgs, quiet_require))
 suppressPackageStartupMessages({
   library(dplyr)
   library(tidyr)
-  library(ggplot2)
+  library(readr)
   library(stringr)
+  library(ggplot2)
   library(scales)
 })
 
 # -----------------------------
-# Shared colors (match manuscript style)
+# Colors used across figures (match manuscript style)
 # -----------------------------
-# Flowchart/boxes (requested)
-COL_TG      <- "#E6550D"  # TwinGene orange
-COL_UKB     <- "#1F78B4"  # UK Biobank blue
+COL_TG_BOX   <- "#E6550D"  # TwinGene orange (flowchart boxes)
+COL_UKB_BOX  <- "#1F78B4"  # UKB blue (flowchart boxes)
 
-# Heatmaps/density (used across your supplementary figures)
-COL_TG_HEAT <- "#D55E00"  # TwinGene orange used in heatmaps/densities
-COL_UKB_HEAT<- "#0072B2"  # UKB blue used in heatmaps
+COL_TG_HEAT  <- "#D55E00"  # TwinGene orange (heatmaps/densities)
+COL_UKB_HEAT <- "#0072B2"  # UKB blue (heatmaps)
 
 # -----------------------------
-# Shared helpers
+# Utilities
 # -----------------------------
 zscore <- function(x) as.numeric(scale(x))
 
@@ -47,9 +46,15 @@ age_residual <- function(x, age) {
   stats::residuals(stats::lm(x ~ age))
 }
 
-# Simple save helper
-save_rds <- function(x, path) {
-  dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)
-  saveRDS(x, path)
-  invisible(path)
+format_p <- function(p) {
+  ifelse(is.na(p), NA_character_,
+         ifelse(p < 0.001, "<0.001", sprintf("%.3f", p)))
+}
+
+stop_if_missing <- function(df, cols, df_name = "data") {
+  miss <- setdiff(cols, names(df))
+  if (length(miss) > 0) {
+    stop(df_name, " is missing required columns: ", paste(miss, collapse = ", "))
+  }
+  invisible(TRUE)
 }
