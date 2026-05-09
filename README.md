@@ -36,27 +36,6 @@ We considered adding contemporary clinical BA comparators (e.g., **GOLD BioAge**
 
 ---
 
-## Directory structure
-
-├── README.md
-├── LICENSE.txt
-├── Requirements.txt
-├── TwinGene_analysis.R             # Main runner (TwinGene discovery + UKB validation)
-└── scripts/
-├── 00_setup.R                      # Package loading + shared helpers + shared colors
-├── 01_prepare_inputs.R             # Read/clean/harmonize analytic datasets
-├── 01_BioAge.R                     # Correlation plotting utilities (TwinGene + UKB)
-├── 02_models_cox_roc.R             # Univariate ROC + Cox models (time-to-event primary)
-├── 03_superlearner_cv.R            # 10-fold CV SuperLearner (+ optional repeats)
-├── 04_subgroup_interactions.R      # Subgroup analyses (age x follow-up) + interaction maps
-└── 05_figures_supp.R               # Supplementary figures (S3 densities; S1/S2 heatmaps)
-
----
-
-> Cohort data files are **not** included in the repository due to access restrictions.
-
----
-
 ## Inputs (not included)
 
 You must provide local analytic datasets (paths can be edited in `TwinGene_analysis.R`), e.g.:
