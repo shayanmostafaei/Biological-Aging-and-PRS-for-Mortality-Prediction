@@ -1,36 +1,16 @@
-## 2) `Requirements.txt` ✅ (replace entire file)
-
-# R package dependencies (install from CRAN unless noted)
-
-data.table
-dplyr
-tidyr
-readr
-stringr
-purrr
-tibble
-
-ggplot2
-ggnewscale
-scales
-patchwork
+# Principal R packages reported in the manuscript
+# Analysis R version: 4.5.1
+#
+# This is a package inventory, not an installation script.
+# Exact package versions and any additional dependencies must be
+# recorded from the final analysis environment.
 
 survival
-survminer
-rms
-timeROC
-pROC
-
-SuperLearner
-caret
-xgboost
-randomForest
-
-Matrix
-glmnet
-
-# If you compute BA measures from biomarkers:
-# Install BioAge from GitHub:
-# remotes::install_github("dayoonkwon/BioAge")
-remotes
+riskRegression
+emmeans
 BioAge
+dcurves
+ggplot2
+
+# Natural spline functions are supplied by splines, distributed with R.
+# Record the actual installation source and revision used for BioAge.
