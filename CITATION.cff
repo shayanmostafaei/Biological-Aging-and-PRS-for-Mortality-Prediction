@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the associated manuscript and the repository release."
+title: "Biological aging measures for all-cause mortality prediction in two population-based cohorts"
+type: software
+authors:
+  - family-names: Mostafaei
+    given-names: Shayan
+  - family-names: Lindh
+    given-names: Jakob
+  - family-names: Qin
+    given-names: Chenxi
+  - family-names: Mak
+    given-names: Jonathan K. L.
+  - family-names: Hägg
+    given-names: Sara
+repository-code: "https://github.com/shayanmostafaei/Biological-Aging-and-PRS-for-Mortality-Prediction"
+license: MIT
