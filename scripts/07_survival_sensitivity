@@ -1,0 +1,765 @@
+# ============================================================
+# 07_survival_sensitivity.R
+# ============================================================
+
+source(
+    "scripts/00_setup.R"
+)
+
+
+cohorts <-
+    load_analysis_cohorts()
+
+
+tg <-
+    prepare_full_cohort(
+        cohorts$TwinGene
+    )
+
+
+ukb <-
+    prepare_full_cohort(
+        cohorts$UKB
+    )
+
+
+measures <- c(
+
+    PhenoAge =
+        "pheno_z",
+
+    KDM =
+        "kdm_z",
+
+    HD =
+        "hd_z",
+
+    FI =
+        "fi_z",
+
+    TL =
+        "tl_z"
+)
+
+
+fit_model <- function(
+        data,
+        variable,
+        cluster_pair = FALSE,
+        time_formula =
+            "Surv(time,event)"
+) {
+
+    d <-
+        data
+
+
+    d$x <-
+        d[
+            [variable]
+        ]
+
+
+    formula <-
+        as.formula(
+
+            paste0(
+
+                time_formula,
+                " ~ ",
+                "splines::ns(age,4) + ",
+                "sex_model + ",
+                "splines::ns(bmi,3) + ",
+                "smoke_model + ",
+                "edu_model + x"
+            )
+        )
+
+
+    if (
+        cluster_pair
+    ) {
+
+        coxph(
+            formula,
+            data = d,
+            cluster =
+                d$pair_id,
+            robust = TRUE,
+            ties = "efron",
+            x = TRUE
+        )
+
+    } else {
+
+        coxph(
+            formula,
+            data = d,
+            ties = "efron",
+            x = TRUE
+        )
+    }
+}
+
+
+extract_x <- function(
+        fit
+) {
+
+    s <-
+        summary(
+            fit
+        )
+
+
+    row <-
+        which(
+            rownames(
+                s$coefficients
+            ) ==
+                "x"
+        )
+
+
+    c(
+        HR =
+            s$coefficients[
+                row,
+                "exp(coef)"
+            ],
+
+        Lower95 =
+            s$conf.int[
+                row,
+                "lower .95"
+            ],
+
+        Upper95 =
+            s$conf.int[
+                row,
+                "upper .95"
+            ],
+
+        P =
+            s$coefficients[
+                row,
+                "Pr(>|z|)"
+            ]
+    )
+}
+
+
+# ============================================================
+# PH diagnostics
+# ============================================================
+
+ph_results <- list()
+
+
+counter <- 1
+
+
+for (
+    cohort_name in
+    c(
+        "TwinGene",
+        "UKB"
+    )
+) {
+
+    d <-
+        if (
+            cohort_name ==
+                "TwinGene"
+        ) tg else ukb
+
+
+    clustered <-
+        cohort_name ==
+        "TwinGene"
+
+
+    for (
+        m in
+        names(measures)
+    ) {
+
+        fit <-
+            fit_model(
+                d,
+                measures[
+                    [m]
+                ],
+                clustered
+            )
+
+
+        zph <-
+            cox.zph(
+                fit
+            )
+
+
+        ph_results[
+            [counter]
+        ] <-
+
+            tibble(
+
+                Cohort =
+                    cohort_name,
+
+                Measure =
+                    m,
+
+                P_PH =
+                    zph$table[
+                        "x",
+                        "p"
+                    ]
+            )
+
+
+        counter <-
+            counter + 1
+    }
+}
+
+
+ph_results <-
+    bind_rows(
+        ph_results
+    )
+
+
+write_csv(
+    ph_results,
+    file.path(
+        PUBLIC_OUTPUT_DIR,
+        "PH_diagnostics.csv"
+    )
+)
+
+
+# ============================================================
+# Interval-specific models
+# ============================================================
+
+make_interval <- function(
+        data,
+        start,
+        end = Inf
+) {
+
+    d <-
+        data %>%
+
+        filter(
+            time > start
+        )
+
+
+    if (
+        is.finite(end)
+    ) {
+
+        d$event_interval <-
+
+            as.integer(
+
+                d$event == 1 &
+
+                d$time <= end
+            )
+
+
+        d$time_interval <-
+
+            pmin(
+                d$time,
+                end
+            ) -
+            start
+
+    } else {
+
+        d$event_interval <-
+            d$event
+
+
+        d$time_interval <-
+            d$time -
+            start
+    }
+
+
+    d
+}
+
+
+intervals <- list(
+
+    `0-5` =
+        c(
+            0,
+            5
+        ),
+
+    `5-10` =
+        c(
+            5,
+            10
+        ),
+
+    `>10` =
+        c(
+            10,
+            Inf
+        )
+)
+
+
+interval_results <- list()
+
+
+counter <- 1
+
+
+for (
+    cohort_name in
+    c(
+        "TwinGene",
+        "UKB"
+    )
+) {
+
+    d0 <-
+        if (
+            cohort_name ==
+                "TwinGene"
+        ) tg else ukb
+
+
+    clustered <-
+        cohort_name ==
+        "TwinGene"
+
+
+    for (
+        interval_name in
+        names(intervals)
+    ) {
+
+        limits <-
+            intervals[
+                [interval_name]
+            ]
+
+
+        d <-
+            make_interval(
+                d0,
+                limits[1],
+                limits[2]
+            )
+
+
+        for (
+            m in
+            names(measures)
+        ) {
+
+            d$x <-
+                d[
+                    [
+                        measures[
+                            [m]
+                        ]
+                    ]
+                ]
+
+
+            formula <-
+                Surv(
+                    time_interval,
+                    event_interval
+                ) ~
+                    splines::ns(
+                        age,
+                        4
+                    ) +
+                    sex_model +
+                    splines::ns(
+                        bmi,
+                        3
+                    ) +
+                    smoke_model +
+                    edu_model +
+                    x
+
+
+            if (
+                clustered
+            ) {
+
+                fit <-
+                    coxph(
+                        formula,
+                        data = d,
+                        cluster =
+                            d$pair_id,
+                        robust =
+                            TRUE
+                    )
+
+            } else {
+
+                fit <-
+                    coxph(
+                        formula,
+                        data = d
+                    )
+            }
+
+
+            estimate <-
+                extract_x(
+                    fit
+                )
+
+
+            interval_results[
+                [counter]
+            ] <-
+
+                tibble(
+
+                    Cohort =
+                        cohort_name,
+
+                    Measure =
+                        m,
+
+                    Interval =
+                        interval_name,
+
+                    N =
+                        nrow(d),
+
+                    Deaths =
+                        sum(
+                            d$event_interval
+                        ),
+
+                    HR =
+                        estimate[
+                            "HR"
+                        ],
+
+                    Lower95 =
+                        estimate[
+                            "Lower95"
+                        ],
+
+                    Upper95 =
+                        estimate[
+                            "Upper95"
+                        ],
+
+                    P =
+                        estimate[
+                            "P"
+                        ]
+                )
+
+
+            counter <-
+                counter + 1
+        }
+    }
+}
+
+
+interval_results <-
+    bind_rows(
+        interval_results
+    )
+
+
+write_csv(
+    interval_results,
+    file.path(
+        PUBLIC_OUTPUT_DIR,
+        "TableS5_interval_specific_models.csv"
+    )
+)
+
+
+# ============================================================
+# 2-year landmark
+# ============================================================
+
+landmark_results <- list()
+
+
+counter <- 1
+
+
+for (
+    cohort_name in
+    c(
+        "TwinGene",
+        "UKB"
+    )
+) {
+
+    d <-
+        if (
+            cohort_name ==
+                "TwinGene"
+        ) tg else ukb
+
+
+    clustered <-
+        cohort_name ==
+        "TwinGene"
+
+
+    d <-
+        d %>%
+
+        filter(
+            time > 2
+        ) %>%
+
+        mutate(
+            time_landmark =
+                time - 2
+        )
+
+
+    for (
+        m in
+        names(measures)
+    ) {
+
+        fit <-
+            fit_model(
+                d,
+                measures[
+                    [m]
+                ],
+                clustered,
+                "Surv(time_landmark,event)"
+            )
+
+
+        estimate <-
+            extract_x(
+                fit
+            )
+
+
+        landmark_results[
+            [counter]
+        ] <-
+
+            tibble(
+
+                Cohort =
+                    cohort_name,
+
+                Measure =
+                    m,
+
+                N =
+                    nrow(d),
+
+                Deaths =
+                    sum(
+                        d$event
+                    ),
+
+                HR =
+                    estimate[
+                        "HR"
+                    ],
+
+                Lower95 =
+                    estimate[
+                        "Lower95"
+                    ],
+
+                Upper95 =
+                    estimate[
+                        "Upper95"
+                    ],
+
+                P =
+                    estimate[
+                        "P"
+                    ]
+            )
+
+
+        counter <-
+            counter + 1
+    }
+}
+
+
+landmark_results <-
+    bind_rows(
+        landmark_results
+    )
+
+
+write_csv(
+    landmark_results,
+    file.path(
+        PUBLIC_OUTPUT_DIR,
+        "TableS6_2year_landmark.csv"
+    )
+)
+
+
+# ============================================================
+# Attained-age timescale
+# ============================================================
+
+attained_results <- list()
+
+
+counter <- 1
+
+
+for (
+    cohort_name in
+    c(
+        "TwinGene",
+        "UKB"
+    )
+) {
+
+    d <-
+        if (
+            cohort_name ==
+                "TwinGene"
+        ) tg else ukb
+
+
+    clustered <-
+        cohort_name ==
+        "TwinGene"
+
+
+    for (
+        m in
+        names(measures)
+    ) {
+
+        d$x <-
+            d[
+                [
+                    measures[
+                        [m]
+                    ]
+                ]
+            ]
+
+
+        formula <-
+            Surv(
+                age,
+                age + time,
+                event
+            ) ~
+                sex_model +
+                splines::ns(
+                    bmi,
+                    3
+                ) +
+                smoke_model +
+                edu_model +
+                x
+
+
+        if (
+            clustered
+        ) {
+
+            fit <-
+                coxph(
+                    formula,
+                    data = d,
+                    cluster =
+                        d$pair_id,
+                    robust =
+                        TRUE
+                )
+
+        } else {
+
+            fit <-
+                coxph(
+                    formula,
+                    data = d
+                )
+        }
+
+
+        estimate <-
+            extract_x(
+                fit
+            )
+
+
+        attained_results[
+            [counter]
+        ] <-
+
+            tibble(
+
+                Cohort =
+                    cohort_name,
+
+                Measure =
+                    m,
+
+                HR =
+                    estimate[
+                        "HR"
+                    ],
+
+                Lower95 =
+                    estimate[
+                        "Lower95"
+                    ],
+
+                Upper95 =
+                    estimate[
+                        "Upper95"
+                    ],
+
+                P =
+                    estimate[
+                        "P"
+                    ]
+            )
+
+
+        counter <-
+            counter + 1
+    }
+}
+
+
+write_csv(
+    bind_rows(
+        attained_results
+    ),
+    file.path(
+        PUBLIC_OUTPUT_DIR,
+        "TableS7_attained_age_models.csv"
+    )
+)
