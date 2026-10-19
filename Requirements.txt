@@ -1,16 +1,38 @@
-# Principal R packages reported in the manuscript
-# Analysis R version: 4.5.1
-#
-# This is a package inventory, not an installation script.
-# Exact package versions and any additional dependencies must be
-# recorded from the final analysis environment.
+# ============================================================
+# Software environment
+# Biological aging and all-cause mortality study
+# ============================================================
 
-survival
-riskRegression
-emmeans
-BioAge
-dcurves
-ggplot2
+R version: 4.5.1
 
-# Natural spline functions are supplied by splines, distributed with R.
-# Record the actual installation source and revision used for BioAge.
+# Core survival analysis
+survival==3.8-3
+riskRegression==2025.05.20
+
+# Biological aging
+BioAge==0.1.0
+
+# Effect estimation / interactions
+emmeans==2.0.4
+
+# Decision-curve analysis
+dcurves==0.5.1
+
+# Figures
+ggplot2==3.5.2
+
+# Data handling
+dplyr
+tidyr
+tibble
+readr
+
+# Natural splines are provided by the recommended/base R package:
+splines
+
+# Notes:
+# 1. Participant-level data are not distributed with this repository.
+# 2. Run sessionInfo() after reproducing the analyses to record
+#    transitive dependencies and platform-specific information.
+# 3. BioAge installation source/version should be preserved with
+#    the manuscript analysis environment.
