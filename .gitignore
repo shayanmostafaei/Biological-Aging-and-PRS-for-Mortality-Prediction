@@ -1,0 +1,23 @@
+# Restricted participant-level inputs
+/data/
+/private_data/
+
+# Private intermediate outputs
+/outputs/private/
+
+# Local credentials and configuration
+.Renviron
+config.local.R
+
+# R workspace and history
+.Rhistory
+.RData
+.Ruserdata
+
+# Local environment libraries
+renv/library/
+renv/staging/
+
+# Operating-system files
+.DS_Store
+Thumbs.db
