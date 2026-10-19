@@ -1,22 +1,45 @@
-# Restricted participant-level inputs
+# ============================================================
+# Restricted participant-level data
+# ============================================================
+
 /data/
 /private_data/
-
-# Private intermediate outputs
 /outputs/private/
+/results/private/
 
-# Local credentials and configuration
-.Renviron
+# Local analysis configuration
+config.R
 config.local.R
+.Renviron
 
-# R workspace and history
+# Participant-level / binary analysis objects
+*.rds
+*.RData
+*.rda
+*.fst
+*.parquet
+*.feather
+
+# Participant-level out-of-fold predictions and fold assignments
+*OOF*
+*oof*
+*fold_partition*
+*fold_assignments*
+
+# R workspace
 .Rhistory
 .RData
 .Ruserdata
+.Rproj.user/
 
-# Local environment libraries
+# renv local libraries
 renv/library/
 renv/staging/
+
+# Temporary files
+*.tmp
+*.log
+~*
 
 # Operating-system files
 .DS_Store
